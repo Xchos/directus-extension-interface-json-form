@@ -2,7 +2,7 @@
 
 Hey there! 👋 I originally built this Directus interface to help manage i18n translations in a more user-friendly way. While working on it, I realized it could be super useful for editing any kind of nested JSON data, so I made it more generic and decided to share it with the community! It gives you a nice structured view of your JSON data that's much easier to work with than raw JSON.
 
-![JSON Form Interface Visual](docs/image_visual.png)
+![JSON Form Interface Visual](https://raw.githubusercontent.com/Xchos/directus-extension-interface-json-form/refs/heads/main/docs/image_visual.png)
 
 ## Features
 
@@ -26,7 +26,7 @@ Hey there! 👋 I originally built this Directus interface to help manage i18n t
 
 You can customize the interface behavior through the field settings:
 
-![Interface Settings](docs/image_settings.png)
+![Interface Settings](https://raw.githubusercontent.com/Xchos/directus-extension-interface-json-form/refs/heads/main/docs/image_settings.png)
 
 ### Features in Detail
 
@@ -37,7 +37,7 @@ You can customize the interface behavior through the field settings:
 #### Search Functionality
 Search through both field names and values with real-time filtering:
 
-![Search Functionality](docs/image_search.png)
+![Search Functionality](https://raw.githubusercontent.com/Xchos/directus-extension-interface-json-form/refs/heads/main/docs/image_search.png)
 
 - Real-time filtering as you type
 - Highlights matching fields and their parent structure
