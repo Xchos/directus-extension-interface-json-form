@@ -1,4 +1,4 @@
-# Directus JSON Form Interface
+# JSON Form Interface
 
 Hey there! 👋 I originally built this Directus interface to help manage i18n translations in a more user-friendly way. While working on it, I realized it could be super useful for editing any kind of nested JSON data, so I made it more generic and decided to share it with the community! It gives you a nice structured view of your JSON data that's much easier to work with than raw JSON.
 

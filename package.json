@@ -1,8 +1,8 @@
 {
 	"name": "directus-extension-interface-json-form",
-	"description": "A Directus interface extension for editing nested JSON data",
+	"description": "An interface extension for editing nested JSON data",
 	"icon": "account_tree",
-	"version": "1.0.4",
+	"version": "1.0.5",
 	"license": "GPL-3.0",
 	"keywords": [
 		"directus",
@@ -19,7 +19,7 @@
 		"type": "interface",
 		"path": "dist/index.js",
 		"source": "src/index.js",
-		"host": "^10.10.0"
+		"host": ">=10.10.0"
 	},
 	"repository": {
 		"type": "git",
