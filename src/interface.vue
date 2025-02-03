@@ -22,6 +22,7 @@
 				:key="key" 
 				:field-key="key" 
 				:value="value"
+				:original-value="originalState[key] ?? value"
 				:active-field="activeField" 
 				:path="key" 
 				:allow-create-new-fields="allow_create_new_fields" 
@@ -36,7 +37,7 @@
 </template>
 
 <script>
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 import RecursiveField from './recursive-field.vue';
 import { useNestedUpdate } from './composables/useNestedUpdate';
 
@@ -71,6 +72,16 @@ export default {
 		const activeField = ref(null);
 		const searchQuery = ref('');
 		const { updateNestedValue } = useNestedUpdate();
+		const originalState = ref({});
+
+		watch(() => props.value, 
+			(newValue) => {
+				if (newValue && Object.keys(originalState.value).length === 0) {
+					originalState.value = JSON.parse(JSON.stringify(newValue));
+				}
+			},
+			{ immediate: true }
+		);
 
 		function handleUpdate(path, newValue) {
 			if (props.readonly) return;
@@ -95,7 +106,8 @@ export default {
 		return {
 			activeField,
 			handleUpdate,
-			searchQuery
+			searchQuery,
+			originalState
 		};
 	},
 };

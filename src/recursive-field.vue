@@ -2,7 +2,7 @@
   <div v-if="isVisible" class="field-wrapper">
     <template v-if="isStringValue">
       <div class="field-row">
-        <json-field ref="fieldRef" :label="path" :value="value" :is-active="activeField === path"
+        <json-field ref="fieldRef" :label="path" :value="value" :original-value="originalValue" :is-active="activeField === path"
           :show-delete="!readonly && allowRemoveFields"
           :show-convert-to-object="!readonly && allowCreateNewFields && !value" :readonly="readonly"
           @delete="showDeleteDialog = true" @convert-to-object="convertToNested" @update="emitUpdate" />
@@ -22,9 +22,9 @@
         </div>
       </div>
       <recursive-field v-for="(childValue, childKey) in value" :key="childKey" :field-key="childKey" :value="childValue"
-        :active-field="activeField" :path="`${path}.${childKey}`" :allow-create-new-fields="allowCreateNewFields"
-        :allow-remove-fields="allowRemoveFields" :search-query="searchQuery" :readonly="readonly"
-        @update="(path, newValue) => $emit('update', path, newValue)"
+        :original-value="typeof originalValue === 'object' ? originalValue[childKey] : childValue" :active-field="activeField"
+        :path="`${path}.${childKey}`" :allow-create-new-fields="allowCreateNewFields" :allow-remove-fields="allowRemoveFields"
+        :search-query="searchQuery" :readonly="readonly" @update="(path, newValue) => $emit('update', path, newValue)"
         @update:active-field="(path) => $emit('update:active-field', path)" />
     </div>
 
@@ -82,6 +82,10 @@ export default {
       required: true
     },
     value: {
+      type: [String, Object],
+      required: true
+    },
+    originalValue: {
       type: [String, Object],
       required: true
     },
@@ -168,30 +172,38 @@ export default {
       if (!props.searchQuery) return true;
 
       const query = props.searchQuery.toLowerCase();
-
       const fullPath = props.path.toLowerCase();
+      
       if (fullPath.includes(query)) {
         return true;
       }
 
       if (isStringValue.value) {
-        return props.value.toLowerCase().includes(query);
+        const currentValueMatch = props.value?.toLowerCase().includes(query);
+        const originalValueMatch = props.originalValue?.toLowerCase().includes(query);
+        return currentValueMatch || originalValueMatch;
       }
 
-      function hasMatchingChild(obj, parentPath) {
+      function hasMatchingChild(obj, originalObj, parentPath) {
+        if (!obj) return false;
+        
         for (const [key, value] of Object.entries(obj)) {
           const currentPath = parentPath ? `${parentPath}.${key}` : key;
+          const originalValue = originalObj?.[key];
 
           if (currentPath.toLowerCase().includes(query)) {
             return true;
           }
 
           if (typeof value === 'string') {
-            if (value.toLowerCase().includes(query)) {
+            const currentValueMatch = value.toLowerCase().includes(query);
+            const originalValueMatch = typeof originalValue === 'string' && 
+                originalValue.toLowerCase().includes(query);
+            if (currentValueMatch || originalValueMatch) {
               return true;
             }
           } else if (typeof value === 'object' && value !== null) {
-            if (hasMatchingChild(value, currentPath)) {
+            if (hasMatchingChild(value, originalValue, currentPath)) {
               return true;
             }
           }
@@ -199,7 +211,8 @@ export default {
         return false;
       }
 
-      return typeof props.value === 'object' && hasMatchingChild(props.value, props.path);
+      return typeof props.value === 'object' && 
+          hasMatchingChild(props.value, props.originalValue, props.path);
     });
 
     return {
