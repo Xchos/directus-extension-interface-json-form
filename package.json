@@ -2,7 +2,7 @@
 	"name": "directus-extension-interface-json-form",
 	"description": "An interface extension for editing nested JSON data",
 	"icon": "account_tree",
-	"version": "1.0.6",
+	"version": "1.0.7",
 	"license": "GPL-3.0",
 	"keywords": [
 		"directus",

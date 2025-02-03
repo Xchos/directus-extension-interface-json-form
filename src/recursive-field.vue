@@ -5,6 +5,7 @@
         <json-field ref="fieldRef" :label="path" :value="value" :original-value="originalValue" :is-active="activeField === path"
           :show-delete="!readonly && allowRemoveFields"
           :show-convert-to-object="!readonly && allowCreateNewFields && !value" :readonly="readonly"
+          :enable-wysiwyg="enableWysiwyg"
           @delete="showDeleteDialog = true" @convert-to-object="convertToNested" @update="emitUpdate" />
       </div>
     </template>
@@ -24,7 +25,8 @@
       <recursive-field v-for="(childValue, childKey) in value" :key="childKey" :field-key="childKey" :value="childValue"
         :original-value="typeof originalValue === 'object' ? originalValue[childKey] : childValue" :active-field="activeField"
         :path="`${path}.${childKey}`" :allow-create-new-fields="allowCreateNewFields" :allow-remove-fields="allowRemoveFields"
-        :search-query="searchQuery" :readonly="readonly" @update="(path, newValue) => $emit('update', path, newValue)"
+        :search-query="searchQuery" :readonly="readonly" :enable-wysiwyg="enableWysiwyg"
+        @update="(path, newValue) => $emit('update', path, newValue)"
         @update:active-field="(path) => $emit('update:active-field', path)" />
     </div>
 
@@ -110,6 +112,10 @@ export default {
       default: ''
     },
     readonly: {
+      type: Boolean,
+      default: false
+    },
+    enableWysiwyg: {
       type: Boolean,
       default: false
     }
@@ -227,7 +233,8 @@ export default {
       deleteField,
       convertToNested,
       fieldRef,
-      isVisible
+      isVisible,
+      enableWysiwyg: computed(() => props.enableWysiwyg)
     };
   }
 };

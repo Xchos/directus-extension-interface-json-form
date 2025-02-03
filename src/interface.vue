@@ -29,6 +29,7 @@
 				:allow-remove-fields="allow_remove_fields"
 				:search-query="enable_search ? searchQuery : ''"
 				:readonly="readonly"
+				:enable-wysiwyg="enable_wysiwyg"
 				@update="handleUpdate" 
 				@update:active-field="(path) => activeField = path" 
 			/>
@@ -63,6 +64,10 @@ export default {
 			default: true
 		},
 		readonly: {
+			type: Boolean,
+			default: false
+		},
+		enable_wysiwyg: {
 			type: Boolean,
 			default: false
 		}

@@ -12,23 +12,47 @@
         </v-button>
       </div>
     </div>
-    <v-input 
-      ref="inputRef" 
-      :model-value="value" 
-      @update:model-value="handleInput" 
-      :class="{ 
-        active: isActive,
-        dirty: isDirty 
-      }"
-      :disabled="readonly" 
-    />
+    <div class="editor-wrapper">
+      <template v-if="enableWysiwyg">
+        <editor-field 
+          ref="inputRef" 
+          :model-value="value" 
+          @update:model-value="handleInput"
+          :class="{
+            active: isActive,
+            dirty: isDirty
+          }"
+          :is-dirty="isDirty"
+          :disabled="readonly"
+          :field="label"
+        />
+      </template>
+      <template v-else>
+        <v-input
+          ref="inputRef"
+          :model-value="value"
+          @update:model-value="handleInput"
+          :class="{
+            active: isActive,
+            dirty: isDirty
+          }"
+          :disabled="readonly"
+          type="text"
+        />
+      </template>
+    </div>
   </div>
 </template>
 
 <script>
 import { ref, computed } from 'vue';
 
+import EditorField from './input-rich-text-html/input-rich-text-html.vue';
+
 export default {
+  components: {
+    EditorField
+  },
   props: {
     label: {
       type: String,
@@ -55,6 +79,10 @@ export default {
       default: false
     },
     readonly: {
+      type: Boolean,
+      default: false
+    },
+    enableWysiwyg: {
       type: Boolean,
       default: false
     }
@@ -126,5 +154,32 @@ export default {
 .field :deep(.v-input.dirty:focus) {
   --v-input-border-color: var(--theme--primary) !important;
   --v-input-background-color: var(--theme--primary-background) !important;
+}
+
+.editor-wrapper {
+  width: 100%;
+  min-height: var(--input-height);
+}
+
+.editor-wrapper :deep(.wysiwyg) {
+  width: 100%;
+}
+
+.editor-wrapper :deep(.v-input) {
+  width: 100%;
+}
+
+.editor-wrapper :deep(.tox-tinymce) {
+  border: var(--theme--border-width) solid var(--theme--form--field--input--border-color);
+  border-radius: var(--theme--border-radius);
+  transition: all var(--fast) var(--transition);
+}
+
+.editor-wrapper :deep(.tox-tinymce:hover) {
+  border-color: var(--theme--form--field--input--border-color-hover);
+}
+
+.editor-wrapper :deep(.tox-tinymce.focus) {
+  border-color: var(--theme--form--field--input--border-color-focus);
 }
 </style>

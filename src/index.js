@@ -52,6 +52,17 @@ export default {
         interface: "boolean",
       },
     },
+    {
+      field: "enable_wysiwyg",
+      name: "Enable WYSIWYG Editor",
+      type: "boolean",
+      required: true,
+      default: false,
+      meta: {
+        width: "full",
+        interface: "boolean",
+      },
+    },
   ],
   types: ["json"],
 };
