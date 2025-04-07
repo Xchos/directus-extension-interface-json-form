@@ -13,11 +13,24 @@
       <div class="nested-header">
         <v-text>{{ path }}</v-text>
         <div class="header-actions">
-          <v-button v-if="!readonly && allowRemoveFields" x-small icon class="danger" @click="showDeleteDialog = true">
+          <v-button 
+            v-if="!readonly && allowRemoveFields" 
+            x-small 
+            icon 
+            class="danger" 
+            @click="showDeleteDialog = true"
+            v-tooltip.left="'Delete this object and all its fields'"
+          >
             <v-icon name="delete" />
           </v-button>
-          <v-button v-if="!readonly && allowCreateNewFields" x-small icon @click="showAddFieldDialog = true"
-            class="success">
+          <v-button 
+            v-if="!readonly && allowCreateNewFields" 
+            x-small 
+            icon 
+            @click="showAddFieldDialog = true"
+            class="success"
+            v-tooltip.left="'Add field to this object'"
+          >
             <v-icon name="add" />
           </v-button>
         </div>
@@ -37,10 +50,10 @@
           Are you sure you want to delete the field "{{ path }}"? This action cannot be undone.
         </v-card-text>
         <v-card-actions>
-          <v-button secondary @click="showDeleteDialog = false">
+          <v-button secondary @click="showDeleteDialog = false" v-tooltip.bottom="'Cancel deletion'">
             Cancel
           </v-button>
-          <v-button danger :loading="isDeleting" @click="deleteField">
+          <v-button danger :loading="isDeleting" @click="deleteField" v-tooltip.bottom="'Permanently delete this field'">
             Delete
           </v-button>
         </v-card-actions>
@@ -53,15 +66,25 @@
         <v-card-text>
           <div class="field-path">
             <span class="path-prefix">{{ path }}.</span>
-            <v-input v-model="newFieldKey" placeholder="Enter field name" :disabled="isCreatingField" />
+            <v-input 
+              v-model="newFieldKey" 
+              placeholder="Enter field name" 
+              :disabled="isCreatingField"
+              @keydown.enter.prevent="createNewField"
+            />
           </div>
         </v-card-text>
         <v-card-actions>
-          <v-button secondary @click="showAddFieldDialog = false">
+          <v-button secondary @click="showAddFieldDialog = false" v-tooltip.bottom="'Cancel adding field'">
             Cancel
           </v-button>
-          <v-button :loading="isCreatingField" @click="createNewField">
-            Add Field
+          <v-button 
+            :loading="isCreatingField" 
+            @click="createNewField"
+            :disabled="!newFieldKey"
+            v-tooltip.bottom="!newFieldKey ? 'Enter a field name first' : 'Add this new field'"
+          >
+            <v-icon name="add" />
           </v-button>
         </v-card-actions>
       </v-card>
