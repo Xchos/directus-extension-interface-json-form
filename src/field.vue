@@ -4,10 +4,24 @@
       <div class="label type-label">{{ label }}</div>
       <v-chip v-if="isDirty" x-small class="modified-chip">Modified</v-chip>
       <div class="field-actions">
-        <v-button v-if="showDelete" x-small icon class="delete-button danger" @click="$emit('delete')">
+        <v-button 
+          v-if="showDelete" 
+          x-small 
+          icon 
+          class="delete-button danger" 
+          @click="$emit('delete')"
+          v-tooltip.left="'Delete this field'"
+        >
           <v-icon name="delete" small />
         </v-button>
-        <v-button v-if="showConvertToObject" class="success" x-small icon @click="$emit('convert-to-object')">
+        <v-button 
+          v-if="showConvertToObject" 
+          class="success" 
+          x-small 
+          icon 
+          @click="$emit('convert-to-object')"
+          v-tooltip.left="'Convert to object (nested fields)'"
+        >
           <v-icon name="add" />
         </v-button>
       </div>
