@@ -14,7 +14,7 @@
           :enable-wysiwyg="enableWysiwyg"
           @delete="() => { currentDeletePath = path; showDeleteDialog = true }"
           @convert-to-object="convertToNested"
-          @update="emitUpdate"
+          @update="(newValue) => emitUpdate(path, newValue)"
         />
       </div>
     </template>
@@ -398,7 +398,11 @@ export default {
       convertToNested,
       fieldRef,
       currentAddPath,
-      currentDeletePath
+      currentDeletePath,
+      enableWysiwyg: computed(() => props.enableWysiwyg),
+      path: props.path,
+      value: props.value,
+      originalValue: props.originalValue
     };
   }
 };
