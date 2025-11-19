@@ -2,32 +2,41 @@
   <div v-if="isVisible" class="field-wrapper">
     <template v-if="isStringValue">
       <div class="field-row">
-        <json-field ref="fieldRef" :label="path" :value="value" :original-value="originalValue" :is-active="activeField === path"
+        <json-field
+          ref="fieldRef"
+          :label="path"
+          :value="value"
+          :original-value="originalValue"
+          :is-active="activeField === path"
           :show-delete="!readonly && allowRemoveFields"
-          :show-convert-to-object="!readonly && allowCreateNewFields && !value" :readonly="readonly"
+          :show-convert-to-object="!readonly && allowCreateNewFields && !value"
+          :readonly="readonly"
           :enable-wysiwyg="enableWysiwyg"
-          @delete="showDeleteDialog = true" @convert-to-object="convertToNested" @update="emitUpdate" />
+          @delete="() => { currentDeletePath = path; showDeleteDialog = true }"
+          @convert-to-object="convertToNested"
+          @update="(newValue) => emitUpdate(path, newValue)"
+        />
       </div>
     </template>
     <div v-else class="nested-group">
       <div class="nested-header">
         <v-text>{{ path }}</v-text>
         <div class="header-actions">
-          <v-button 
-            v-if="!readonly && allowRemoveFields" 
-            x-small 
-            icon 
-            class="danger" 
-            @click="showDeleteDialog = true"
+          <v-button
+            v-if="!readonly && allowRemoveFields"
+            x-small
+            icon
+            class="danger"
+            @click="() => { currentDeletePath = path; showDeleteDialog = true }"
             v-tooltip.left="'Delete this object and all its fields'"
           >
             <v-icon name="delete" />
           </v-button>
-          <v-button 
-            v-if="!readonly && allowCreateNewFields" 
-            x-small 
-            icon 
-            @click="showAddFieldDialog = true"
+          <v-button
+            v-if="!readonly && allowCreateNewFields"
+            x-small
+            icon
+            @click="() => { currentAddPath = path; showAddFieldDialog = true }"
             class="success"
             v-tooltip.left="'Add field to this object'"
           >
@@ -35,19 +44,61 @@
           </v-button>
         </div>
       </div>
-      <recursive-field v-for="(childValue, childKey) in value" :key="childKey" :field-key="childKey" :value="childValue"
-        :original-value="typeof originalValue === 'object' ? originalValue[childKey] : childValue" :active-field="activeField"
-        :path="`${path}.${childKey}`" :allow-create-new-fields="allowCreateNewFields" :allow-remove-fields="allowRemoveFields"
-        :search-query="searchQuery" :readonly="readonly" :enable-wysiwyg="enableWysiwyg"
-        @update="(path, newValue) => $emit('update', path, newValue)"
-        @update:active-field="(path) => $emit('update:active-field', path)" />
+      <div
+        v-for="entry in flatFields"
+        :key="entry.path"
+        :style="{ paddingLeft: `${entry.depth * 16}px` }"
+      >
+        <div v-if="entry.isObject" class="nested-group">
+          <div class="nested-header">
+            <v-text>{{ entry.path }}</v-text>
+            <div class="header-actions">
+              <v-button
+                v-if="!readonly && allowRemoveFields"
+                x-small
+                icon
+                class="danger"
+                @click="() => { currentDeletePath = entry.path; showDeleteDialog = true }"
+                v-tooltip.left="'Delete this object and all its fields'"
+              >
+                <v-icon name="delete" />
+              </v-button>
+              <v-button
+                v-if="!readonly && allowCreateNewFields"
+                x-small
+                icon
+                @click="() => { currentAddPath = entry.path; showAddFieldDialog = true }"
+                class="success"
+                v-tooltip.left="'Add field to this object'"
+              >
+                <v-icon name="add" />
+              </v-button>
+            </div>
+          </div>
+        </div>
+        <div v-else class="field-row">
+          <json-field
+            :label="entry.path"
+            :value="entry.value"
+            :original-value="entry.originalValue"
+            :is-active="activeField === entry.path"
+            :show-delete="!readonly && allowRemoveFields"
+            :show-convert-to-object="!readonly && allowCreateNewFields && !entry.value"
+            :readonly="readonly"
+            :enable-wysiwyg="enableWysiwyg"
+            @delete="() => { currentDeletePath = entry.path; showDeleteDialog = true }"
+            @convert-to-object="() => { currentAddPath = entry.path; showAddFieldDialog = true }"
+            @update="(newValue) => emitUpdate(entry.path, newValue)"
+          />
+        </div>
+      </div>
     </div>
 
     <v-dialog v-model="showDeleteDialog" @esc="showDeleteDialog = false">
       <v-card>
         <v-card-title>Delete Field</v-card-title>
         <v-card-text>
-          Are you sure you want to delete the field "{{ path }}"? This action cannot be undone.
+          Are you sure you want to delete the field "{{ currentDeletePath }}"? This action cannot be undone.
         </v-card-text>
         <v-card-actions>
           <v-button secondary @click="showDeleteDialog = false" v-tooltip.bottom="'Cancel deletion'">
@@ -62,13 +113,13 @@
 
     <v-dialog v-model="showAddFieldDialog" @esc="showAddFieldDialog = false">
       <v-card>
-        <v-card-title>Add New Field to {{ path }}</v-card-title>
+        <v-card-title>Add New Field to {{ currentAddPath }}</v-card-title>
         <v-card-text>
           <div class="field-path">
-            <span class="path-prefix">{{ path }}.</span>
-            <v-input 
-              v-model="newFieldKey" 
-              placeholder="Enter field name" 
+            <span class="path-prefix">{{ currentAddPath }}.</span>
+            <v-input
+              v-model="newFieldKey"
+              placeholder="Enter field name"
               :disabled="isCreatingField"
               @keydown.enter.prevent="createNewField"
             />
@@ -78,8 +129,8 @@
           <v-button secondary @click="showAddFieldDialog = false" v-tooltip.bottom="'Cancel adding field'">
             Cancel
           </v-button>
-          <v-button 
-            :loading="isCreatingField" 
+          <v-button
+            :loading="isCreatingField"
             @click="createNewField"
             :disabled="!newFieldKey"
             v-tooltip.bottom="!newFieldKey ? 'Enter a field name first' : 'Add this new field'"
@@ -152,35 +203,47 @@ export default {
     const isCreatingField = ref(false);
     const isDeleting = ref(false);
     const fieldRef = ref(null);
+    const currentAddPath = ref('');
+    const currentDeletePath = ref('');
 
-    function emitUpdate(newValue) {
-      emit('update', props.path, newValue);
+    function getNestedValue(obj, path) {
+      if (!path || path === props.path) return obj;
+      const relativePath = path.substring(props.path.length + 1);
+      return relativePath.split('.').reduce((current, key) => current && current[key], obj);
+    }
+
+    function emitUpdate(path, newValue) {
+      emit('update', path, newValue);
     }
 
     function deleteField() {
       isDeleting.value = true;
-
       try {
-        emit('update', props.path, undefined);
+        emitUpdate(currentDeletePath.value, undefined);
       } catch (error) {
         console.error('Error deleting field:', error);
       }
-
       isDeleting.value = false;
       showDeleteDialog.value = false;
     }
 
     function createNewField() {
       if (!newFieldKey.value) return;
-
       isCreatingField.value = true;
 
-      const updatedValue = typeof props.value === 'string' ? {} : { ...props.value };
-      updatedValue[newFieldKey.value] = '';
+      const parentPath = currentAddPath.value;
+      const currentValue = getNestedValue(props.value, parentPath);
 
-      const newFieldPath = `${props.path}.${newFieldKey.value}`;
+      let updatedValue;
+      if (typeof currentValue !== 'object' || currentValue === null) {
+        updatedValue = { [newFieldKey.value]: '' };
+      } else {
+        updatedValue = { ...currentValue, [newFieldKey.value]: '' };
+      }
 
-      emit('update', props.path, updatedValue);
+      emitUpdate(parentPath, updatedValue);
+
+      const newFieldPath = `${parentPath}.${newFieldKey.value}`;
       emit('update:active-field', newFieldPath);
 
       nextTick(() => {
@@ -194,58 +257,136 @@ export default {
     }
 
     function convertToNested() {
+      currentAddPath.value = props.path;
       showAddFieldDialog.value = true;
     }
+
+    const query = computed(() => props.searchQuery.toLowerCase());
 
     const isVisible = computed(() => {
       if (!props.searchQuery) return true;
 
-      const query = props.searchQuery.toLowerCase();
+      const q = query.value;
       const fullPath = props.path.toLowerCase();
-      
-      if (fullPath.includes(query)) {
-        return true;
-      }
+
+      if (fullPath.includes(q)) return true;
 
       if (isStringValue.value) {
-        const currentValueMatch = props.value?.toLowerCase().includes(query);
-        const originalValueMatch = props.originalValue?.toLowerCase().includes(query);
-        return currentValueMatch || originalValueMatch;
+        const v = props.value?.toLowerCase() || '';
+        const ov = (typeof props.originalValue === 'string' ? props.originalValue : '').toLowerCase();
+        return v.includes(q) || ov.includes(q);
       }
 
-      function hasMatchingChild(obj, originalObj, parentPath) {
-        if (!obj) return false;
-        
-        for (const [key, value] of Object.entries(obj)) {
-          const currentPath = parentPath ? `${parentPath}.${key}` : key;
-          const originalValue = originalObj?.[key];
+      const stack = Object.entries(props.value || {}).map(([key, val]) => ({
+        obj: val,
+        path: `${props.path}.${key}`,
+        original: (props.originalValue || {})[key] || val
+      })).reverse();
 
-          if (currentPath.toLowerCase().includes(query)) {
-            return true;
-          }
+      while (stack.length) {
+        const { obj, path, original } = stack.pop();
 
-          if (typeof value === 'string') {
-            const currentValueMatch = value.toLowerCase().includes(query);
-            const originalValueMatch = typeof originalValue === 'string' && 
-                originalValue.toLowerCase().includes(query);
-            if (currentValueMatch || originalValueMatch) {
-              return true;
-            }
-          } else if (typeof value === 'object' && value !== null) {
-            if (hasMatchingChild(value, originalValue, currentPath)) {
-              return true;
-            }
+        if (path.toLowerCase().includes(q)) return true;
+
+        if (typeof obj === 'string') {
+          const v = obj.toLowerCase();
+          const ov = (typeof original === 'string' ? original : '').toLowerCase();
+          if (v.includes(q) || ov.includes(q)) return true;
+        } else if (typeof obj === 'object' && obj !== null) {
+          for (const [key, val] of Object.entries(obj).reverse()) {
+            const childPath = `${path}.${key}`;
+            const origVal = original ? original[key] : val;
+            stack.push({ obj: val, path: childPath, original: origVal });
           }
         }
-        return false;
       }
 
-      return typeof props.value === 'object' && 
-          hasMatchingChild(props.value, props.originalValue, props.path);
+      return false;
+    });
+
+    const flatFields = computed(() => {
+      if (isStringValue.value || !props.value) return [];
+
+      const flat = [];
+      const stack = Object.entries(props.value).map(([key, val]) => ({
+        obj: val,
+        path: `${props.path}.${key}`,
+        depth: 1,
+        original: (props.originalValue || {})[key] || val
+      })).reverse();
+
+      while (stack.length) {
+        const { obj, path, depth, original } = stack.pop();
+        const isObject = typeof obj === 'object' && obj !== null;
+
+        flat.push({
+          path,
+          value: obj,
+          originalValue: original,
+          depth,
+          isObject
+        });
+
+        if (isObject) {
+          for (const [key, val] of Object.entries(obj).reverse()) {
+            const childPath = `${path}.${key}`;
+            const origVal = original ? original[key] : val;
+            stack.push({
+              obj: val,
+              path: childPath,
+              depth: depth + 1,
+              original: origVal
+            });
+          }
+        }
+      }
+
+      if (!props.searchQuery) return flat;
+
+      const visible = new Set();
+      const matchStack = Object.entries(props.value).map(([key, val]) => ({
+        obj: val,
+        path: `${props.path}.${key}`,
+        original: (props.originalValue || {})[key] || val
+      })).reverse();
+
+      const q = query.value;
+
+      while (matchStack.length) {
+        const { obj, path, original } = matchStack.pop();
+        const currPath = path.toLowerCase();
+        let matched = false;
+
+        if (currPath.includes(q)) {
+          matched = true;
+        } else if (typeof obj === 'string') {
+          const v = obj.toLowerCase();
+          const ov = (typeof original === 'string' ? original : '').toLowerCase();
+          if (v.includes(q) || ov.includes(q)) matched = true;
+        }
+
+        if (matched) {
+          let prefix = '';
+          for (const part of path.split('.')) {
+            prefix = prefix ? `${prefix}.${part}` : part;
+            visible.add(prefix);
+          }
+        } else if (typeof obj === 'object' && obj !== null) {
+          for (const [key, val] of Object.entries(obj).reverse()) {
+            const childPath = `${path}.${key}`;
+            const origVal = original ? original[key] : val;
+            matchStack.push({ obj: val, path: childPath, original: origVal });
+          }
+        }
+      }
+
+      return flat.filter(entry => visible.has(entry.path));
     });
 
     return {
       isStringValue,
+      isVisible,
+      flatFields,
       emitUpdate,
       showAddFieldDialog,
       showDeleteDialog,
@@ -256,8 +397,12 @@ export default {
       deleteField,
       convertToNested,
       fieldRef,
-      isVisible,
-      enableWysiwyg: computed(() => props.enableWysiwyg)
+      currentAddPath,
+      currentDeletePath,
+      enableWysiwyg: computed(() => props.enableWysiwyg),
+      path: props.path,
+      value: props.value,
+      originalValue: props.originalValue
     };
   }
 };
